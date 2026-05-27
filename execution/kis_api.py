@@ -23,7 +23,8 @@ class KISApi:
         self.base_url   = BASE_URL_PAPER if self.is_paper else BASE_URL_REAL
 
         if not self.account_no or "-" not in self.account_no:
-            raise ValueError(f"KIS_ACCOUNT_NO 형식 오류: '{self.account_no}' — XXXXXXXX-XX 형식으로 입력하세요")
+            print(f"[경고] KIS_ACCOUNT_NO가 설정되지 않았거나 형식이 올바르지 않습니다. 공유용 기본 가짜 계좌번호를 사용합니다.")
+            self.account_no = "12345678-01"
 
         self._access_token = None
         self._token_expires = None
