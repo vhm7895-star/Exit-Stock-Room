@@ -1363,5 +1363,84 @@ tabs.forEach(([id, text]) => {
   if (el) el.textContent = text;
 });
 </script>
+
+<!-- ══ AI 채팅 위젯 ══ -->
+<style>
+  .ai-chat-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: #3b82f6; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 9999; transition: 0.2s; border: none; }
+  .ai-chat-btn:hover { transform: scale(1.05); background: #2563eb; }
+  .ai-chat-panel { position: fixed; bottom: 100px; right: 30px; width: 360px; height: 520px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); display: none; flex-direction: column; z-index: 9999; overflow: hidden; }
+  .ai-chat-header { background: #1e3a8a; padding: 14px 18px; color: #fff; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .ai-chat-body { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #0d0f18; }
+  .ai-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.5; word-break: break-word; }
+  .ai-msg.user { background: #3b82f6; color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; }
+  .ai-msg.bot { background: #1e2435; color: var(--bright); align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid var(--border); }
+  .ai-chat-footer { padding: 12px; background: var(--card); border-top: 1px solid var(--border); display: flex; gap: 8px; }
+  .ai-chat-input { flex: 1; background: #0d0f18; border: 1px solid var(--border); border-radius: 20px; padding: 8px 16px; color: var(--bright); font-size: 0.88rem; outline: none; }
+  .ai-chat-input:focus { border-color: #3b82f6; }
+  .ai-chat-send { background: #3b82f6; color: white; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+  .ai-chat-send:hover { background: #2563eb; }
+</style>
+
+<button class="ai-chat-btn" onclick="toggleAIChat()" title="AI 어시스턴트">
+  <i class="bi bi-robot"></i>
+</button>
+
+<div class="ai-chat-panel" id="aiChatPanel">
+  <div class="ai-chat-header">
+    <span><i class="bi bi-stars me-2 text-warning"></i>주식 AI 어시스턴트</span>
+    <i class="bi bi-x-lg" style="cursor:pointer; font-size:1.1rem;" onclick="toggleAIChat()"></i>
+  </div>
+  <div class="ai-chat-body" id="aiChatBody">
+    <div class="ai-msg bot">안녕하세요! 주식, 기업 분석, 시황 등 궁금한 점을 편하게 물어보세요.<br><span style="font-size:0.75rem; color:#94a3b8">예) 엔비디아 관련주 알려줘 / 골든크로스 의미가 뭐야?</span></div>
+  </div>
+  <div class="ai-chat-footer">
+    <input type="text" id="aiChatInput" class="ai-chat-input" placeholder="질문을 입력하세요..." onkeypress="if(event.key==='Enter') sendAIChat()">
+    <button class="ai-chat-send" onclick="sendAIChat()"><i class="bi bi-send-fill"></i></button>
+  </div>
+</div>
+
+<script>
+function toggleAIChat() {
+  const p = document.getElementById('aiChatPanel');
+  p.style.display = p.style.display === 'flex' ? 'none' : 'flex';
+  if (p.style.display === 'flex') document.getElementById('aiChatInput').focus();
+}
+
+async function sendAIChat() {
+  const input = document.getElementById('aiChatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  
+  const body = document.getElementById('aiChatBody');
+  body.insertAdjacentHTML('beforeend', `<div class="ai-msg user">${msg}</div>`);
+  input.value = '';
+  body.scrollTop = body.scrollHeight;
+  
+  const loadId = 'loading-' + Date.now();
+  body.insertAdjacentHTML('beforeend', `<div class="ai-msg bot" id="${loadId}"><div class="spinner-border spinner-border-sm text-secondary me-2"></div>생각하는 중...</div>`);
+  body.scrollTop = body.scrollHeight;
+  
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ message: msg })
+    });
+    const d = await res.json();
+    document.getElementById(loadId).remove();
+    
+    if (d.error) {
+      body.insertAdjacentHTML('beforeend', `<div class="ai-msg bot text-danger" style="font-size:0.8rem"><i class="bi bi-exclamation-triangle me-1"></i>${d.error}</div>`);
+    } else {
+      const formatted = d.reply.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+      body.insertAdjacentHTML('beforeend', `<div class="ai-msg bot">${formatted}</div>`);
+    }
+  } catch(e) {
+    document.getElementById(loadId).remove();
+    body.insertAdjacentHTML('beforeend', `<div class="ai-msg bot text-danger">서버 통신 오류가 발생했습니다.</div>`);
+  }
+  body.scrollTop = body.scrollHeight;
+}
+</script>
+
 </body>
 </html>

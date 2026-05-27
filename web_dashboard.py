@@ -1420,6 +1420,32 @@ def api_backtest():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/chat", methods=["POST"])
+def api_chat():
+    try:
+        from google import genai
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return jsonify({"error": "GEMINI_API_KEY가 설정되지 않았습니다. .env 파일에 추가해주세요."}), 400
+            
+        client = genai.Client(api_key=api_key)
+        body = request.get_json()
+        user_message = body.get("message", "")
+        
+        sys_prompt = "너는 주식 투자를 도와주는 전문 AI 어시스턴트야. 사용자의 질문에 항상 친절하고 전문적으로 답변해줘. 한국어로 대답해야 해."
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=user_message,
+            config=genai.types.GenerateContentConfig(
+                system_instruction=sys_prompt
+            )
+        )
+        return jsonify({"ok": True, "reply": response.text})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
     print("=" * 45)
     print(" KIS 자동매매 대시보드 시작")
