@@ -1351,16 +1351,7 @@ def api_pending_orders():
 
 @app.route("/api/cancel_order", methods=["POST"])
 def api_cancel_order():
-    try:
-        body     = request.get_json()
-        order_no = str(body.get("order_no", ""))
-        code     = str(body.get("code", ""))
-        qty      = int(body.get("qty", 0))
-        price    = int(body.get("price", 0))
-        result   = api.cancel_order(order_no, code, qty, price)
-        return jsonify({"ok": True, "result": result})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify({"error": "공유용 데모 버전에서는 주문 취소 기능이 제한되어 있습니다."}), 403
 
 
 @app.route("/api/strategy", methods=["GET"])
