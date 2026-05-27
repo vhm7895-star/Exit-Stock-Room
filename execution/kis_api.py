@@ -32,8 +32,14 @@ class KISApi:
     # ── 인증 ──────────────────────────────────────────────
 
     def get_access_token(self) -> str:
+        if not self.app_key or not self.app_secret:
+            raise ValueError("KIS_APP_KEY 또는 KIS_APP_SECRET 환경변수가 설정되지 않았습니다.")
+            
         if self._access_token and self._token_expires and datetime.now() < self._token_expires:
             return self._access_token
+
+        if getattr(self, '_auth_failed_until', None) and datetime.now() < self._auth_failed_until:
+            raise RuntimeError("이전 인증 실패로 인해 재시도를 보류중입니다.")
 
         url = f"{self.base_url}/oauth2/tokenP"
         body = {
@@ -41,8 +47,13 @@ class KISApi:
             "appkey": self.app_key,
             "appsecret": self.app_secret,
         }
-        res = requests.post(url, json=body)
-        res.raise_for_status()
+        try:
+            res = requests.post(url, json=body, timeout=5)
+            res.raise_for_status()
+        except Exception as e:
+            self._auth_failed_until = datetime.now() + timedelta(minutes=1)
+            raise RuntimeError(f"인증 실패: {e}")
+            
         data = res.json()
 
         self._access_token  = data["access_token"]
