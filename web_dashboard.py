@@ -1299,11 +1299,12 @@ def api_orderbook(code):
 
 @app.route("/api/indices")
 def api_indices():
+    start  = (datetime.now() - timedelta(days=7)).strftime("%Y%m%d")
     today  = datetime.now().strftime("%Y%m%d")
     result = {}
     for key, idx in [("kospi", "1001"), ("kosdaq", "2001")]:
         try:
-            df = pykrx.get_index_ohlcv_by_date(today, today, idx)
+            df = pykrx.get_index_ohlcv_by_date(start, today, idx)
             if not df.empty:
                 close  = float(df["종가"].iloc[-1])
                 open_  = float(df["시가"].iloc[-1])
