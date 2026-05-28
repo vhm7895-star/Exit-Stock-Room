@@ -1313,7 +1313,7 @@ def api_indices():
     for key, code in [("kospi", "KOSPI"), ("kosdaq", "KOSDAQ")]:
         try:
             url = f"https://m.stock.naver.com/api/index/{code}/basic"
-            res = req_lib.get(url, timeout=5).json()
+            res = req_lib.get(url, timeout=5, headers={"User-Agent": "Mozilla/5.0"}).json()
             close_price = float(res.get("closePrice", "0").replace(",", ""))
             change_rt = float(res.get("fluctuationsRatio", "0"))
             if close_price > 0:
