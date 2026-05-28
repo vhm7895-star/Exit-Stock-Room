@@ -884,25 +884,7 @@ def _enrich_prices(stocks, limit=15):
 
 
 def _latest_news_title(name, ttl=600):
-    now = datetime.now()
-    cached = _news_reason_cache.get(name)
-    if cached and (now - cached["ts"]).total_seconds() < ttl:
-        return cached["title"]
-    try:
-        q = f"{name} 주가"
-        url = (f"https://news.google.com/rss/search"
-               f"?q={req_lib.utils.quote(q)}&hl=ko&gl=KR&ceid=KR:ko")
-        res = req_lib.get(url, timeout=2, headers={"User-Agent": "Mozilla/5.0"})
-        root = ET.fromstring(res.content)
-        item = root.find(".//item")
-        title = item.findtext("title", "") if item is not None else ""
-        if " - " in title:
-            title = title.rsplit(" - ", 1)[0]
-        title = title.strip()
-    except Exception:
-        title = ""
-    _news_reason_cache[name] = {"ts": now, "title": title}
-    return title
+    return ""
 
 
 def _ranking_reason(item, kind):

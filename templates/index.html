@@ -1014,9 +1014,7 @@ function showToast(type, msg) {
 }
 
 function refreshAll() {
-  loadLogs();
   loadIndices();
-  loadPending();
 }
 
 document.addEventListener('click', e => {
@@ -1033,12 +1031,10 @@ document.addEventListener('click', e => {
   loadThemes();
   refreshAll();
   loadRankings();
-  loadScreening();
 })();
 
 setInterval(refreshAll,    10_000);
 setInterval(loadRankings,  60_000);
-setInterval(loadScreening, 180_000);
 setInterval(loadIndices,   60_000);
 
 // Clean overrides for newer market widgets.
