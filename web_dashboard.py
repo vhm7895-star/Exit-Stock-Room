@@ -1309,17 +1309,15 @@ def api_orderbook(code):
 
 @app.route("/api/indices")
 def api_indices():
-    start  = (datetime.now() - timedelta(days=7)).strftime("%Y%m%d")
-    today  = datetime.now().strftime("%Y%m%d")
     result = {}
-    for key, idx in [("kospi", "1001"), ("kosdaq", "2001")]:
+    for key, code in [("kospi", "KOSPI"), ("kosdaq", "KOSDAQ")]:
         try:
-            df = pykrx.get_index_ohlcv_by_date(start, today, idx)
-            if not df.empty:
-                close  = float(df["종가"].iloc[-1])
-                open_  = float(df["시가"].iloc[-1])
-                chg_rt = (close - open_) / open_ * 100 if open_ > 0 else 0
-                result[key] = {"value": round(close, 2), "change_rt": round(chg_rt, 2)}
+            url = f"https://m.stock.naver.com/api/index/{code}/basic"
+            res = req_lib.get(url, timeout=5).json()
+            close_price = float(res.get("closePrice", "0").replace(",", ""))
+            change_rt = float(res.get("fluctuationsRatio", "0"))
+            if close_price > 0:
+                result[key] = {"value": round(close_price, 2), "change_rt": round(change_rt, 2)}
         except Exception:
             pass
     return jsonify(result)
