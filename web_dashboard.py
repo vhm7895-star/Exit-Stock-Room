@@ -805,27 +805,37 @@ def _kis_watchlist_snapshot():
             break
 
     market_by_code = {s["code"]: s.get("market", "KOSPI") for s in DOMESTIC_STOCKS}
-    for code, name in watchlist:
+    
+    try:
+        api.get_access_token()
+    except Exception:
+        pass
+        
+    def fetch_stock(item):
+        code, name = item
         try:
             d = _quote_cached(code)
             price = int(_num(d.get("stck_prpr", 0)))
-            volume = int(_num(d.get("acml_vol", 0)))
-            change_rt = _num(d.get("prdy_ctrt", 0))
             if price <= 0:
-                continue
-            items.append({
+                return None
+            return {
                 "code": code,
                 "name": name,
                 "market": market_by_code.get(code, "KOSPI"),
                 "price": price,
                 "open": int(_num(d.get("stck_oprc", 0))),
-                "volume": volume,
+                "volume": int(_num(d.get("acml_vol", 0))),
                 "trade_amount": int(_num(d.get("acml_tr_pbmn", 0))),
-                "trend_rt": round(change_rt, 2),
+                "trend_rt": round(_num(d.get("prdy_ctrt", 0)), 2),
                 "date": _today_yyyymmdd(),
-            })
+            }
         except Exception:
-            continue
+            return None
+
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        results = list(pool.map(fetch_stock, watchlist))
+        
+    items = [r for r in results if r is not None]
     return items
 
 
